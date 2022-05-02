@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <script src="//unpkg.com/force-graph"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="../static/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"
+            integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ=="
+            crossorigin="anonymous"></script>
+    <script src="../static/index.js"></script>
+</head>
+
+<body>
+<!-- Title -->
+<h1 id="NARS_title" style="text-align: center;">Title</h1>
+
+<!-- Concept network graph -->
+<div id="memory-graph-container">
+
+</div>
+
+<div id="sidebar-left" class="sidebar" style="left: 0px;">
+    <div class="sidebar-titlebar">
+        <h2 class="sidebar-title">Channels & Architecture<br>Monitor Panel</h2>
+    </div>
+
+    <!-- Input Card -->
+    <div id="inputcard" class="widget-card-sidebar">
+      <div class="widget-card-titlebar">
+        <h1 class="widget-card-title">Input</h1>
+      </div>
+      <div class="widget-card-body">
+          <div style="display: flex; width: 100%; height: 100%;">
+            <form id="narseseInputForm" method="POST">
+                <textarea id="narseseInputTextbox" style="width: 75%; height: 50%; resize: none;"></textarea>
+                <input type="submit" value="Send to NARS">
+            </form>
+          </div>
+      </div>
+    </div>
+
+    <!-- Inference Log Card -->
+    <div id="inferencelogcard" class="widget-card-sidebar">
+      <div class="widget-card-titlebar">
+        <h1 class="widget-card-title">Inference Log</h1>
+      </div>
+      <div class="widget-card-body">
+      </div>
+    </div>
+</div>
+
+<div id="sidebar-right" class="sidebar" style="right: 0px;">
+    <div id="sidebar-right-titlebar" class="sidebar-titlebar" style="background: green;">
+        <h2 class="sidebar-title">Concept<br>Tracker</h2>
+    </div>
+
+</div>
+
+<!-- Buffer Card (hidden; used for cloning) -->
+<div id="buffer-card" class="widget-card-sidebar" hidden>
+  <div class="widget-card-titlebar">
+    <h1 class="widget-card-title">Buffer #</h1>
+  </div>
+  <div class="widget-card-body">
+     <table class="buffer-table">
+      <tr>
+        <th>Sentence</th>
+        <th>Budget</th>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div id="concept-card" class="widget-card-sidebar" style="direction: rtl;" hidden>
+  <div class="widget-card-titlebar">
+    <h1 class="widget-card-title">Concept</h1>
+  </div>
+  <div class="widget-card-body">
+  </div>
+</div>
+
+</html>
