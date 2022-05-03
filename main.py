@@ -23,6 +23,7 @@ thread_lock = Lock()
 # get port
 with open("config.cfg") as cfg:
     lines = cfg.readlines()
+    GUI_PORT = int(lines[0].split("=")[1])
     NARS_PORT = int(lines[1].split("=")[1])
 
 """
@@ -30,7 +31,6 @@ with open("config.cfg") as cfg:
 GUI Webpage routing
 
 """
-
 @app.route('/')
 def index():
     return redirect(url_for('NARS_view'))
@@ -50,24 +50,21 @@ def master_route(request):
     path = request.path
     print('Got HTTP ' + request.method + ' request ' + str(path))
     try:
-        data = dict(request.get_json())
+        data = dict(request.get_json()) # must convert to dict to read by key in javascript
         if path == APIkeys.PATH_INITIALIZE:
-            # todo hide a loading screen, show the GUI elements
             socketio.emit('initialize', data)
-        elif path == APIkeys.PATH_ADD_CONCEPT:
-            socketio.emit('add_node_to_memory_graph', data)
-        elif path == APIkeys.PATH_ADD_LINK:
-            socketio.emit('add_link', data)
-        elif path == APIkeys.PATH_ADD_TASK_TO_BUFFER:
-            socketio.emit('add_task_to_buffer', data)
-        elif path == APIkeys.PATH_REMOVE_TASK_FROM_BUFFER:
-            socketio.emit('remove_task_from_buffer', data)
+        elif path == APIkeys.PATH_UPDATE_BUFFER:
+            socketio.emit('update_buffer', data)
         elif path == APIkeys.PATH_SHOW_CONCEPT_INFO:
             socketio.emit('show_concept_info', data)
+        elif path == APIkeys.PATH_ADD_NEW_CONCEPTS:
+            data = data[APIkeys.KEY_CONCEPTS] # get array of new concepts
+            for concept in data:
+                socketio.emit('add_concept_node_to_memory_graph',  dict(concept))
         else:
             assert "ERROR: Path not handled in JavaScript"
 
-        return jsonify({"hello": "world"})
+        return jsonify({"Handled Post": "Request"})
     except Exception as e:
         print(e)
         return jsonify({"ERROR": request.path})
@@ -77,27 +74,16 @@ def master_route(request):
 def initialize():
     return master_route(request)
 
-
-@app.route(APIkeys.PATH_ADD_CONCEPT, methods=["POST"])
-def add_concept():
-    return master_route(request)
-
 @app.route(APIkeys.PATH_SHOW_CONCEPT_INFO, methods=["POST"])
 def show_concept_info():
     return master_route(request)
 
-@app.route(APIkeys.PATH_ADD_LINK, methods=["POST"])
-def add_link():
+@app.route(APIkeys.PATH_UPDATE_BUFFER, methods=["POST"])
+def update_buffer():
     return master_route(request)
 
-
-@app.route(APIkeys.PATH_ADD_TASK_TO_BUFFER, methods=["POST"])
-def add_task_to_buffer():
-    return master_route(request)
-
-
-@app.route(APIkeys.PATH_REMOVE_TASK_FROM_BUFFER, methods=["POST"])
-def remove_task_from_buffer():
+@app.route(APIkeys.PATH_ADD_NEW_CONCEPTS, methods=["POST"])
+def add_new_concepts():
     return master_route(request)
 
 
@@ -106,7 +92,21 @@ def remove_task_from_buffer():
 COMMAND TO NARS
 
 """
-# Receive the test request from client and send back a test response
+@socketio.on('get_initialize')
+def get_initialize():
+    """
+        Get
+    :param term_string:
+    :return:
+    """
+    print('Getting NARS initialization info')
+    mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mysocket.connect(('localhost', NARS_PORT))
+    data = {APIkeys.COMMAND: APIkeys.COMMAND_GET_INITIALIZE}
+    mysocket.send(json.dumps(data).encode())
+
+
+
 @socketio.on('send_input')
 def send_input(input_string):
     print('Sending input to NARS: ' + str(input_string))
@@ -130,7 +130,34 @@ def get_concept_info(term_string):
             APIkeys.KEY_DATA: term_string}
     mysocket.send(json.dumps(data).encode())
 
+@socketio.on('get_update_buffer')
+def get_update_buffer(buffer_name):
+    """
+        Get
+    :param term_string:
+    :return:
+    """
+    print('Getting latest buffer info from NARS: ' + str(buffer_name))
+    mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mysocket.connect(('localhost', NARS_PORT))
+    data = {APIkeys.COMMAND: APIkeys.COMMAND_UPDATE_BUFFER,
+            APIkeys.KEY_DATA: buffer_name}
+    mysocket.send(json.dumps(data).encode())
+
+
+@socketio.on('get_new_concepts')
+def get_new_concepts():
+    """
+        Get
+    :param term_string:
+    :return:
+    """
+    print('Getting new concepts created in NARS')
+    mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mysocket.connect(('localhost', NARS_PORT))
+    data = {APIkeys.COMMAND: APIkeys.COMMAND_GET_NEW_CONCEPTS}
+    mysocket.send(json.dumps(data).encode())
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(port=GUI_PORT)

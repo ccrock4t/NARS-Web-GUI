@@ -1,23 +1,21 @@
 :root {
---color-bone:#E0DDCF;
---color-isabelline:#F1F0EA;
---color-dark-liver:#524B52;
---color-raisin-black:#2D232E;
+--color-sand: #fcda8b;
+--color-deep-blue: #336185;
+--color-sky-blue: #446d97;
+--color-sky-purple: #404c74;
 }
 html, body {
   width: 100%;
   height: 100%;
   margin: 0px;
   overflow: hidden;
-}
-
-body {
+  background-color: var(--color-deep-blue);
 }
 
 .sidebar {
   position: absolute;
   z-index: 1;
-  background: #aeb6bf;
+  background: var(--color-sand);
   padding: 8px 0;
   box-shadow: rgba(0, 0, 0, 0.7) 0px 4px 8px 0px;
   overflow-y: scroll;
@@ -40,7 +38,7 @@ body {
 }
 
 .widget-card-sidebar {
-  background-color: rgb(241, 240, 234);
+  background-color: var(--color-sand);
   box-shadow: rgba(0, 0, 0, 0.7) 0px 4px 8px 0px;
   margin: 1vw;
   overflow: hidden;
@@ -54,7 +52,7 @@ body {
 
 .widget-card-titlebar {
   background-image: none;
-  background-color: var(--color-raisin-black);
+  background-color: var(--color-sky-purple);
   padding-top: 0.5vw;
   padding-bottom: 0.5vw;
   padding-left: 0.4vw;
@@ -62,25 +60,26 @@ body {
   cursor: move;
   direction: ltr;
 }
+
 .widget-card-title{
   display: inline;
   margin: 0;
   font-size: 1.75vw;
   vertical-align: middle;
-  color: var(--color-isabelline);
+  color: white;
   direction: ltr;
 }
 .widget-card-body {
   width: 100%;
   height: 85%;
   background-image: none;
-  background-color: var(--color-isabelline);
+  background-color: var(--color-sky-blue);
 }
 
 .sidebar-title{
     font-size: 1.75vw;
     text-align: center;
-    color: var(--color-isabelline);
+    color: white;
     margin-right: 10px;
     margin-left: 10px;
 }
@@ -98,6 +97,7 @@ table.buffer-table table,td,th{
 }
 
 #NARS_title{
+    color: white;
     position: absolute;
     text-align: center;
     width: 100%;

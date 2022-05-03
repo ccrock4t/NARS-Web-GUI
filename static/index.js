@@ -1,8 +1,31 @@
+//==== Keep up to date with API keys
+PATH_UPDATE_BUFFER = "/UpdateBuffer/"
+//==============
+
 var max_widget_z = 0
 
 $(document).ready(function() {
     // connect to socket.io server
     var socket = io();
+
+    var buffer_names = [];
+
+
+    function emit_update_buffer(){
+        if(buffer_names.length == 0) return;
+        for(let buffer_name of buffer_names){
+            socket.emit('get_update_buffer', buffer_name);
+        }
+
+    }
+
+    function emit_get_new_concepts(){
+        socket.emit('get_new_concepts');
+    }
+
+    socket.emit('get_initialize');
+    setInterval(emit_update_buffer, 1000);
+    setInterval(emit_get_new_concepts, 3000);
 
     // Initialize function called from Python
     socket.on('initialize', function(data) {
@@ -15,6 +38,7 @@ $(document).ready(function() {
         var i = 0;
         for (const [key, value] of Object.entries(buffer_dict)) {
             const buffer_name = value['buffer_name']
+            buffer_names.push(buffer_name);
             let clone = $("#buffer-card").clone();
             clone_DOM = clone[0]
             clone_DOM.hidden = false;
@@ -22,7 +46,6 @@ $(document).ready(function() {
             clone.attr("id",buffer_name.split(' ').join(''));
 
             clone.css({top: i*100 + "px", left: 0});
-            console.log(clone.find("h1").html());
             clone.find("h1").html(buffer_name);
             $("#inputcard").after(clone);
             i += 1;
@@ -57,21 +80,23 @@ $(document).ready(function() {
         });
     }
 
-    // call on add task to buffer
-    socket.on('add_task_to_buffer',function (data){
+    // draw buffer updates
+    socket.on('update_buffer',function (data){
         buffer_id = data["buffer_name"].split(' ').join('');
-        new_row_html = "<tr id=\"" + buffer_id + data['sentence_ID'] + "\">"
-        new_row_html += "<th>" + data['sentence'].replace('>', '&gt').replace('<', '&lt') + "</th>"
-        new_row_html += "<th>" + data['budget'].replace('>', '&gt').replace('<', '&lt') + "</th>"
+        buffer_contents_html = "";
+        new_row_html = "<tr>"
+        new_row_html += "<th>Sentence</th>"
+        new_row_html += "<th>Budget</th>"
         new_row_html += "</tr>"
-        new_row = $("#" + buffer_id + " tr:last").after(new_row_html);
-        new_row.attr('id', );
-    });
-
-    // call on add task to buffer
-    socket.on('remove_task_from_buffer',function (data){
-        buffer_id = data["buffer_name"].split(' ').join('');
-        $("#" + buffer_id + data['sentence_ID']).remove();
+        buffer_contents_html += new_row_html
+        for(let row_data of data["buffer_contents"]){
+            new_row_html = "<tr>"
+            new_row_html += "<th>" + row_data['sentence'].replace('>', '&gt').replace('<', '&lt') + "</th>"
+            new_row_html += "<th>" + row_data['budget'].replace('>', '&gt').replace('<', '&lt') + "</th>"
+            new_row_html += "</tr>"
+            buffer_contents_html += new_row_html;
+        }
+        $("#" + buffer_id + " tbody:first").html(buffer_contents_html);
     });
 
     /*
@@ -122,14 +147,15 @@ $(document).ready(function() {
             bckgDimensions && ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, ...bckgDimensions);
         }).onNodeClick(node => {
             // Center/zoom on node
-            console.log("click")
             memory_graph.centerAt(node.x, node.y, 500);
             socket.emit('get_concept_info', node.id);
         });
 
 
+
+
     //add a new node to the graph
-    socket.on('add_node_to_memory_graph',function (data){
+    socket.on('add_concept_node_to_memory_graph',function (data){
         let { nodes, links } = memory_graph.graphData();
         let id = data["concept_ID"];
         let group = data["term_type"];
@@ -147,27 +173,27 @@ $(document).ready(function() {
     });
 
     //add a new link to the graph
-    socket.on('add_link',function (data){
-        let { nodes, links } = memory_graph.graphData();
-
-        let group = data["link_type"];
-        // set link color
-        if(group == "termlink"){
-            color = "lightblue";
-        }
-        // create new link object
-        new_link = {
-            source: data["link_source"],
-            target: data["link_target"],
-            group: group,
-            color: color
-        }
-        //update graph with new link
-        memory_graph.graphData({
-            nodes: nodes,
-            links: [...links, new_link]
-        });
-    });
+//    socket.on('add_link',function (data){
+//        let { nodes, links } = memory_graph.graphData();
+//
+//        let group = data["link_type"];
+//        // set link color
+//        if(group == "termlink"){
+//            color = "lightblue";
+//        }
+//        // create new link object
+//        new_link = {
+//            source: data["link_source"],
+//            target: data["link_target"],
+//            group: group,
+//            color: color
+//        }
+//        //update graph with new link
+//        memory_graph.graphData({
+//            nodes: nodes,
+//            links: [...links, new_link]
+//        });
+//    });
 
     //show concept info
     socket.on('show_concept_info',function (data){
@@ -193,7 +219,6 @@ $(document).ready(function() {
     $('form#narseseInputForm').submit(function(event) {
         input_string = $("#narseseInputTextbox").val()
         $("#narseseInputTextbox").val("")
-        console.log(input_string)
         socket.emit('send_input', input_string);
         return false;
     });
