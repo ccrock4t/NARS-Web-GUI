@@ -53,14 +53,15 @@ def master_route(request):
         data = dict(request.get_json()) # must convert to dict to read by key in javascript
         if path == APIkeys.PATH_INITIALIZE:
             socketio.emit('initialize', data)
+            data = data[APIkeys.KEY_CONCEPTS] # get array of concepts
+            socketio.emit('add_concept_nodes_to_memory_graph', list(data))
         elif path == APIkeys.PATH_UPDATE_BUFFER:
             socketio.emit('update_buffer', data)
         elif path == APIkeys.PATH_SHOW_CONCEPT_INFO:
             socketio.emit('show_concept_info', data)
         elif path == APIkeys.PATH_ADD_NEW_CONCEPTS:
             data = data[APIkeys.KEY_CONCEPTS] # get array of new concepts
-            for concept in data:
-                socketio.emit('add_concept_node_to_memory_graph',  dict(concept))
+            socketio.emit('add_concept_nodes_to_memory_graph', list(data))
         else:
             assert "ERROR: Path not handled in JavaScript"
 

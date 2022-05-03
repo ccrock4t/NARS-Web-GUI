@@ -4,6 +4,12 @@ PATH_UPDATE_BUFFER = "/UpdateBuffer/"
 
 var max_widget_z = 0
 
+
+// replace < and > with HTML safe characters
+function EncodeStringForHTML(unencoded_string){
+    return unencoded_string.replace('>', '&gt').replace('<', '&lt')
+}
+
 $(document).ready(function() {
     // connect to socket.io server
     var socket = io();
@@ -91,8 +97,8 @@ $(document).ready(function() {
         buffer_contents_html += new_row_html
         for(let row_data of data["buffer_contents"]){
             new_row_html = "<tr>"
-            new_row_html += "<th>" + row_data['sentence'].replace('>', '&gt').replace('<', '&lt') + "</th>"
-            new_row_html += "<th>" + row_data['budget'].replace('>', '&gt').replace('<', '&lt') + "</th>"
+            new_row_html += "<th>" + EncodeStringForHTML(row_data['sentence']) + "</th>"
+            new_row_html += "<th>" + EncodeStringForHTML(row_data['budget']) + "</th>"
             new_row_html += "</tr>"
             buffer_contents_html += new_row_html;
         }
@@ -152,22 +158,27 @@ $(document).ready(function() {
         });
 
 
-
-
-    //add a new node to the graph
-    socket.on('add_concept_node_to_memory_graph',function (data){
+    //add new nodes to the graph
+    socket.on('add_concept_nodes_to_memory_graph',function (data){
         let { nodes, links } = memory_graph.graphData();
-        let id = data["concept_ID"];
-        let group = data["term_type"];
-        if(group == "atomic"){
-            color = "green"
-        }else if (group == "statement"){
-            color = "red"
-        }
-        memory_graph.graphData({
-            nodes: [...nodes, { id: id,
+
+        new_nodes = [];
+        for(let concept of data){
+            let id = concept["concept_ID"];
+            let group = concept["term_type"];
+            let color = "";
+            if(group == "atomic"){
+                color = "green"
+            }else if (group == "statement"){
+                color = "red"
+            }
+            new_nodes.push({ id: id,
                                 group: group,
-                                color: color}],
+                                color: color})
+        }
+
+        memory_graph.graphData({
+            nodes: [...nodes, ...new_nodes],
             links: links
         });
     });
@@ -198,13 +209,24 @@ $(document).ready(function() {
     //show concept info
     socket.on('show_concept_info',function (data){
         let { nodes, links } = memory_graph.graphData();
-        let id = data["concept_ID"];
+        let id = EncodeStringForHTML(data["concept_ID"]);
         let beliefs = null;
         let beliefs_key = "beliefs"
+
         if(beliefs_key in data){
             beliefs = data[beliefs_key];
         }
+        console.log(beliefs)
 
+        beliefs_table_html = "";
+        precision = 10000
+        for(let belief of beliefs){
+            new_row_html = "<tr>"
+            new_row_html += "<th>" + EncodeStringForHTML( belief['sentence']) + "</th>"
+//            new_row_html += "<th>" + belief['truth']['frequency']["value"]/precision + "," + belief['truth']['confidence']["value"]/precision + "</th>"
+            new_row_html += "</tr>"
+            beliefs_table_html += new_row_html;
+        }
 
         // create concept card
         let clone = $("#concept-card").clone();
@@ -212,6 +234,7 @@ $(document).ready(function() {
         clone_DOM.hidden = false;
         clone.attr("id","conceptInfoBox" + id);
         clone.find("h1").html("concept " + id);
+        clone.find('tbody').first().html(beliefs_table_html);
         $("#sidebar-right-titlebar").after(clone);
     });
 
